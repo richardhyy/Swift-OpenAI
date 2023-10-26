@@ -19,17 +19,21 @@ final public class OpenAI: OpenAIProtocol {
         
         /// Optional OpenAI organization identifier. See https://platform.openai.com/docs/api-reference/authentication
         public let organizationIdentifier: String?
-        
+
         /// API host. Set this property if you use some kind of proxy or your own server. Default is api.openai.com
         public let host: String
-        
+
+        /// Additional headers to be added to each request
+        public let additionalHeaders: [String: String]
+
         /// Default request timeout
         public let timeoutInterval: TimeInterval
         
-        public init(token: String, organizationIdentifier: String? = nil, host: String = "api.openai.com", timeoutInterval: TimeInterval = 60.0) {
+        public init(token: String, organizationIdentifier: String? = nil, host: String = "api.openai.com", additionalHeaders: [String: String] = [:], timeoutInterval: TimeInterval = 60.0) {
             self.token = token
             self.organizationIdentifier = organizationIdentifier
             self.host = host
+            self.additionalHeaders = additionalHeaders
             self.timeoutInterval = timeoutInterval
         }
     }
@@ -109,7 +113,7 @@ extension OpenAI {
 
     func performRequest<ResultType: Codable>(request: any URLRequestBuildable, completion: @escaping (Result<ResultType, Error>) -> Void) {
         do {
-            let request = try request.build(token: configuration.token, organizationIdentifier: configuration.organizationIdentifier, timeoutInterval: configuration.timeoutInterval)
+            let request = try request.build(token: configuration.token, organizationIdentifier: configuration.organizationIdentifier, additionalHeaders: configuration.additionalHeaders, timeoutInterval: configuration.timeoutInterval)
             let task = session.dataTask(with: request) { data, _, error in
                 if let error = error {
                     completion(.failure(error))
@@ -145,7 +149,7 @@ extension OpenAI {
     
     func performSteamingRequest<ResultType: Codable>(request: any URLRequestBuildable, onResult: @escaping (Result<ResultType, Error>) -> Void, completion: ((Error?) -> Void)?) {
         do {
-            let request = try request.build(token: configuration.token, organizationIdentifier: configuration.organizationIdentifier, timeoutInterval: configuration.timeoutInterval)
+            let request = try request.build(token: configuration.token, organizationIdentifier: configuration.organizationIdentifier, additionalHeaders: configuration.additionalHeaders, timeoutInterval: configuration.timeoutInterval)
             let session = StreamingSession<ResultType>(urlRequest: request)
             session.onReceiveContent = {_, object in
                 onResult(.success(object))

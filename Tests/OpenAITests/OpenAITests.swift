@@ -275,25 +275,27 @@ class OpenAITests: XCTestCase {
     }
     
     func testJSONRequestCreation() throws {
-        let configuration = OpenAI.Configuration(token: "foo", organizationIdentifier: "bar", timeoutInterval: 14)
+        let configuration = OpenAI.Configuration(token: "foo", organizationIdentifier: "bar", additionalHeaders: ["HTTP-Referer": "http://localhost:3000"], timeoutInterval: 14)
         let completionQuery = CompletionsQuery(model: .whisper_1, prompt: "how are you?")
         let jsonRequest = JSONRequest<CompletionsResult>(body: completionQuery, url: URL(string: "http://google.com")!)
-        let urlRequest = try jsonRequest.build(token: configuration.token, organizationIdentifier: configuration.organizationIdentifier, timeoutInterval: configuration.timeoutInterval)
+        let urlRequest = try jsonRequest.build(token: configuration.token, organizationIdentifier: configuration.organizationIdentifier, additionalHeaders: configuration.additionalHeaders, timeoutInterval: configuration.timeoutInterval)
         
         XCTAssertEqual(urlRequest.value(forHTTPHeaderField: "Authorization"), "Bearer \(configuration.token)")
         XCTAssertEqual(urlRequest.value(forHTTPHeaderField: "Content-Type"), "application/json")
         XCTAssertEqual(urlRequest.value(forHTTPHeaderField: "OpenAI-Organization"), configuration.organizationIdentifier)
+        XCTAssertEqual(urlRequest.value(forHTTPHeaderField: "HTTP-Referer"), "http://localhost:3000")
         XCTAssertEqual(urlRequest.timeoutInterval, configuration.timeoutInterval)
     }
     
     func testMultipartRequestCreation() throws {
-        let configuration = OpenAI.Configuration(token: "foo", organizationIdentifier: "bar", timeoutInterval: 14)
+        let configuration = OpenAI.Configuration(token: "foo", organizationIdentifier: "bar", additionalHeaders: ["HTTP-Referer": "http://localhost:3000"], timeoutInterval: 14)
         let completionQuery = AudioTranslationQuery(file: Data(), fileName: "foo", model: .whisper_1)
         let jsonRequest = MultipartFormDataRequest<CompletionsResult>(body: completionQuery, url: URL(string: "http://google.com")!)
-        let urlRequest = try jsonRequest.build(token: configuration.token, organizationIdentifier: configuration.organizationIdentifier, timeoutInterval: configuration.timeoutInterval)
+        let urlRequest = try jsonRequest.build(token: configuration.token, organizationIdentifier: configuration.organizationIdentifier, additionalHeaders: configuration.additionalHeaders, timeoutInterval: configuration.timeoutInterval)
         
         XCTAssertEqual(urlRequest.value(forHTTPHeaderField: "Authorization"), "Bearer \(configuration.token)")
         XCTAssertEqual(urlRequest.value(forHTTPHeaderField: "OpenAI-Organization"), configuration.organizationIdentifier)
+        XCTAssertEqual(urlRequest.value(forHTTPHeaderField: "HTTP-Referer"), "http://localhost:3000")
         XCTAssertEqual(urlRequest.timeoutInterval, configuration.timeoutInterval)
     }
     
